@@ -44,8 +44,9 @@ def run_tracking(video_path: str, conf_threshold: float, show_heatmap: bool, sho
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
     writer = cv2.VideoWriter(out_path, fourcc, fps, (width, height))
 
-    processed    = 0
-    unique_ids   = set()   # track every ID ever seen across the whole video
+    processed     = 0
+    id_remap      = {}   # ByteTrack raw ID → our clean sequential ID (1, 2, 3…)
+    next_clean_id = 1    # counter for assigning clean IDs
 
     while True:
         ret, frame = cap.read()
@@ -56,12 +57,19 @@ def run_tracking(video_path: str, conf_threshold: float, show_heatmap: bool, sho
         detections = sv.Detections.from_ultralytics(results)
         detections = tracker.update_with_detections(detections)
 
-        if detections.tracker_id is not None and len(detections.tracker_id) > 0:
-            unique_ids.update(detections.tracker_id.tolist())
+        confs = detections.confidence if detections.confidence is not None else []
+        tids  = detections.tracker_id if detections.tracker_id is not None else []
 
-        confs  = detections.confidence  if detections.confidence  is not None else []
-        tids   = detections.tracker_id  if detections.tracker_id  is not None else []
-        labels = [f"#{tid}  {conf:.2f}" for conf, tid in zip(confs, tids)]
+        # Remap ByteTrack's internal IDs → clean sequential IDs starting from #1
+        clean_ids = []
+        for raw_id in tids:
+            raw_id = int(raw_id)
+            if raw_id not in id_remap:
+                id_remap[raw_id] = next_clean_id
+                next_clean_id += 1
+            clean_ids.append(id_remap[raw_id])
+
+        labels = [f"#{cid}  {conf:.2f}" for cid, conf in zip(clean_ids, confs)]
 
         annotated = frame.copy()
 
@@ -74,12 +82,13 @@ def run_tracking(video_path: str, conf_threshold: float, show_heatmap: bool, sho
         annotated = box_annotator.annotate(scene=annotated, detections=detections)
         annotated = label_annotator.annotate(scene=annotated, detections=detections, labels=labels)
 
-        # Live counter overlay
+        # Live counter — highest clean ID always equals total unique IDs assigned
+        total_seen = next_clean_id - 1
         cv2.putText(
             annotated,
-            f"Live Count: {len(detections)}  |  Unique IDs so far: {len(unique_ids)}",
+            f"Live: {len(detections)} people  |  Unique IDs: {total_seen}",
             (20, 45),
-            cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 255), 2, cv2.LINE_AA,
+            cv2.FONT_HERSHEY_SIMPLEX, 0.85, (0, 255, 255), 2, cv2.LINE_AA,
         )
 
         writer.write(annotated)
@@ -88,11 +97,12 @@ def run_tracking(video_path: str, conf_threshold: float, show_heatmap: bool, sho
     cap.release()
     writer.release()
 
+    total_unique = next_clean_id - 1
     progress_pct = round(processed / total * 100) if total > 0 else 100
     summary = (
-        f"✅ Done! Processed {processed}/{total} frames ({progress_pct}%)\n"
-        f"👥 Total unique IDs assigned: {len(unique_ids)}\n"
-        f"💡 Tip: If IDs seem too high, increase the confidence threshold slider."
+        f"\u2705 Done! Processed {processed}/{total} frames ({progress_pct}%)\n"
+        f"\U0001f465 Total unique IDs assigned: {total_unique}\n"
+        f"\U0001f4cc IDs run from #1 to #{total_unique} — counter always matches highest ID on screen."
     )
     return out_path, summary
 
