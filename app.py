@@ -1,18 +1,23 @@
-import gradio as gr
+import streamlit as st
 import cv2
 import os
+import tempfile
+import subprocess
 from ultralytics import YOLO
 import supervision as sv
 
-print("Loading YOLOv8 model...")
-model = YOLO("yolov8m.pt")
-print("Model loaded!")
+st.set_page_config(page_title="Multi-Object Tracker", page_icon="🏃", layout="wide")
 
+@st.cache_resource
+def load_model():
+    print("Loading YOLOv8 model...")
+    model = YOLO("yolov8m.pt")
+    print("Model loaded!")
+    return model
 
-def run_tracking(video_path: str, conf_threshold: float, show_heatmap: bool, show_trace: bool):
-    if video_path is None:
-        return None, "Please upload a video first."
+model = load_model()
 
+def run_tracking(video_path: str, conf_threshold: float, show_heatmap: bool, show_trace: bool, progress_bar, status_text):
     tracker           = sv.ByteTrack()
     box_annotator     = sv.BoundingBoxAnnotator(thickness=2)
     lbl_annotator     = sv.LabelAnnotator(text_thickness=2, text_scale=0.6, text_padding=8)
@@ -28,7 +33,6 @@ def run_tracking(video_path: str, conf_threshold: float, show_heatmap: bool, sho
     out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tracked_output.mp4")
     writer   = cv2.VideoWriter(out_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, (width, height))
 
-    all_ids   = set()  # not used for display — ByteTrack IDs are shown directly on video
     processed = 0
 
     while True:
@@ -39,10 +43,6 @@ def run_tracking(video_path: str, conf_threshold: float, show_heatmap: bool, sho
         results    = model(frame, verbose=False, conf=conf_threshold, classes=[0])[0]
         detections = sv.Detections.from_ultralytics(results)
         detections = tracker.update_with_detections(detections)
-
-        # Track unique IDs (for internal use only — not shown in summary)
-        if detections.tracker_id is not None:
-            all_ids.update(detections.tracker_id.tolist())
 
         # Labels — just show the ID ByteTrack assigned, no remapping at all
         tids  = detections.tracker_id if detections.tracker_id is not None else []
@@ -59,16 +59,32 @@ def run_tracking(video_path: str, conf_threshold: float, show_heatmap: bool, sho
 
         writer.write(annotated)
         processed += 1
+        
+        # Update progress
+        if total > 0:
+            progress_pct = int((processed / total) * 100)
+            progress_bar.progress(progress_pct)
+            status_text.text(f"Processing frame {processed}/{total} ({progress_pct}%)")
 
     cap.release()
     writer.release()
+    
+    # Convert video to H264 for web browser compatibility using ffmpeg
+    out_web_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tracked_output_web.mp4")
+    if os.path.exists(out_web_path):
+        os.remove(out_web_path)
+    
+    status_text.text("Converting video format for web viewing...")
+    subprocess.run(["ffmpeg", "-y", "-i", out_path, "-vcodec", "libx264", "-f", "mp4", out_web_path], capture_output=True)
+    
+    progress_bar.empty()
+    status_text.text(f"Done — {processed}/{total} frames processed (100%)")
+    
+    if os.path.exists(out_web_path):
+        return out_web_path
+    return out_path
 
-    progress_pct = round(processed / total * 100) if total > 0 else 100
-    summary = f"Done — {processed}/{total} frames processed ({progress_pct}%)"
-    return out_path, summary
-
-
-DESCRIPTION = """
+st.markdown("""
 # 🏃 Multi-Object Tracking — Sports & Event Footage
 **Powered by YOLOv8 + ByteTrack**
 
@@ -82,33 +98,57 @@ DESCRIPTION = """
 - Every detected person gets a **unique persistent ID** automatically.
 - ByteTrack assigns IDs — however many subjects are in the video, that many IDs appear.
 - No limits, no fixed numbers.
-"""
+---
+""")
 
-with gr.Blocks(title="Multi-Object Tracker") as demo:
-    gr.Markdown(DESCRIPTION)
-    with gr.Row():
-        with gr.Column(scale=1):
-            video_input = gr.Video(label="📹 Upload Input Video", sources=["upload"])
-            conf_slider = gr.Slider(
-                minimum=0.1, maximum=0.9, value=0.5, step=0.05,
-                label="Detection Confidence Threshold",
-                info="Higher = cleaner detections & more stable IDs. Try 0.4–0.6 for sports."
-            )
-            with gr.Row():
-                heatmap_toggle = gr.Checkbox(value=True, label="🔥 Show Heatmap")
-                trace_toggle   = gr.Checkbox(value=True, label="🛤️  Show Trajectories")
-            run_btn = gr.Button("🚀 Run Tracking", variant="primary", size="lg")
-        with gr.Column(scale=1):
-            video_output = gr.Video(label="🎬 Annotated Output Video")
-            status_box   = gr.Textbox(label="📊 Result Summary", lines=2, interactive=False)
-    run_btn.click(
-        fn=run_tracking,
-        inputs=[video_input, conf_slider, heatmap_toggle, trace_toggle],
-        outputs=[video_output, status_box],
+col1, col2 = st.columns(2)
+
+with col1:
+    st.subheader("📹 Upload Input Video")
+    uploaded_file = st.file_uploader("Choose a video...", type=["mp4", "mov", "avi"])
+    
+    conf_slider = st.slider(
+        "Detection Confidence Threshold",
+        min_value=0.1, max_value=0.9, value=0.5, step=0.05,
+        help="Higher = cleaner detections & more stable IDs. Try 0.4–0.6 for sports."
     )
+    
+    col1_a, col1_b = st.columns(2)
+    with col1_a:
+        heatmap_toggle = st.checkbox("🔥 Show Heatmap", value=True)
+    with col1_b:
+        trace_toggle = st.checkbox("🛤️  Show Trajectories", value=True)
+        
+    run_btn = st.button("🚀 Run Tracking", type="primary", use_container_width=True)
 
-if __name__ == "__main__":
-    import os
-    port = int(os.environ.get("PORT", 7860))
-    demo.launch(share=False, server_name="0.0.0.0", server_port=port, theme=gr.themes.Soft())
+with col2:
+    st.subheader("🎬 Annotated Output Video")
+    output_container = st.empty()
+    status_text = st.empty()
+    progress_bar = st.empty()
 
+if run_btn:
+    if uploaded_file is None:
+        st.error("Please upload a video first.")
+    else:
+        # Save uploaded file to temp
+        tfile = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") 
+        tfile.write(uploaded_file.read())
+        
+        # Run tracking
+        with st.spinner('Processing video...'):
+            final_video_path = run_tracking(
+                tfile.name, 
+                conf_slider, 
+                heatmap_toggle, 
+                trace_toggle,
+                progress_bar,
+                status_text
+            )
+            
+            # Display result
+            with open(final_video_path, 'rb') as video_file:
+                video_bytes = video_file.read()
+                output_container.video(video_bytes)
+                
+            st.success("Tracking complete!")
