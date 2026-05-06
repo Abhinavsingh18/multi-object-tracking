@@ -59,13 +59,9 @@ def run_tracking(video_path: str, conf_threshold: float, show_heatmap: bool, sho
         if detections.tracker_id is not None and len(detections.tracker_id) > 0:
             max_ids_seen = max(max_ids_seen, int(detections.tracker_id.max()))
 
-        labels = [
-            f"#{tid}  {conf:.2f}"
-            for conf, tid in zip(
-                detections.confidence or [],
-                detections.tracker_id if detections.tracker_id is not None else []
-            )
-        ]
+        confs  = detections.confidence  if detections.confidence  is not None else []
+        tids   = detections.tracker_id  if detections.tracker_id  is not None else []
+        labels = [f"#{tid}  {conf:.2f}" for conf, tid in zip(confs, tids)]
 
         annotated = frame.copy()
 
