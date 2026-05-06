@@ -1,0 +1,18 @@
+# Environments
+venv/
+env/
+.env
+
+# Cache
+__pycache__/
+*.pyc
+
+# Model Weights (Auto-downloaded by Ultralytics, no need to upload)
+*.pt
+
+# OS generated files
+.DS_Store
+
+# (Optional) Ignore large videos if you don't want them in the repo
+# input_video.mp4
+# output_video.mp4
