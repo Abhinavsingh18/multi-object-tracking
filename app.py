@@ -37,9 +37,8 @@ def run_tracking(video_path: str, conf_threshold: float, show_heatmap: bool, sho
     fps    = cap.get(cv2.CAP_PROP_FPS) or 25
     total  = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-    # Write to a temp file
-    out_fd, out_path = tempfile.mkstemp(suffix=".mp4")
-    os.close(out_fd)
+    # Always write to a fixed path so Gradio never serves a stale cached file
+    out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tracked_output.mp4")
 
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
     writer = cv2.VideoWriter(out_path, fourcc, fps, (width, height))
@@ -100,9 +99,10 @@ def run_tracking(video_path: str, conf_threshold: float, show_heatmap: bool, sho
     total_unique = next_clean_id - 1
     progress_pct = round(processed / total * 100) if total > 0 else 100
     summary = (
-        f"\u2705 Done! Processed {processed}/{total} frames ({progress_pct}%)\n"
-        f"\U0001f465 Total unique IDs assigned: {total_unique}\n"
-        f"\U0001f4cc IDs run from #1 to #{total_unique} — counter always matches highest ID on screen."
+        f"Done! Processed {processed}/{total} frames ({progress_pct}%)"
+        f"\nTotal unique people tracked: {total_unique}"
+        f"\nIDs on screen: #1 through #{total_unique}  (clean sequential, starts from 1)"
+        f"\nConf threshold used: {conf_threshold}"
     )
     return out_path, summary
 
