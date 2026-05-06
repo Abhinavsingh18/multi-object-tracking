@@ -27,7 +27,7 @@ def main():
     tracker = sv.ByteTrack()
 
     # Initialize Annotators
-    box_annotator = sv.BoundingBoxAnnotator(
+    box_annotator = sv.BoxAnnotator(
         thickness=2
     )
     

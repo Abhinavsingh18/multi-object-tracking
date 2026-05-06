@@ -19,7 +19,7 @@ model = load_model()
 
 def run_tracking(video_path: str, conf_threshold: float, show_heatmap: bool, show_trace: bool, progress_bar, status_text):
     tracker           = sv.ByteTrack()
-    box_annotator     = sv.BoundingBoxAnnotator(thickness=2)
+    box_annotator     = sv.BoxAnnotator(thickness=2)
     lbl_annotator     = sv.LabelAnnotator(text_thickness=2, text_scale=0.6, text_padding=8)
     trace_annotator   = sv.TraceAnnotator(thickness=2, trace_length=50)
     heatmap_annotator = sv.HeatMapAnnotator()
