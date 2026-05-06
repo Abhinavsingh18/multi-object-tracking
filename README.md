@@ -12,14 +12,8 @@ A complete computer vision pipeline that detects and persistently tracks every p
 multi-object-tracking/
 ├── app.py                  # ← Gradio Web App (run this for the UI)
 ├── main.py                 # ← CLI Python Script (run this from terminal)
-├── demo.ipynb              # ← Jupyter Notebook version
-├── extract_screenshots.py  # ← Extracts sample frames from output video
-├── generate_pdf.py         # ← Converts report.md → report.pdf
 ├── requirements.txt        # ← All dependencies
 ├── README.md
-├── report.md               # ← Technical report (markdown)
-├── report.pdf              # ← Technical report (PDF)
-└── screenshots/            # ← Sample output frames
 ```
 
 ---
@@ -68,12 +62,6 @@ python main.py
 ```
 Reads `input_video.mp4`, writes `output_video.mp4`.
 
-#### Option C: 📓 Jupyter Notebook
-```bash
-jupyter notebook demo.ipynb
-```
-Run cells one by one for a step-by-step walkthrough.
-
 ---
 
 ## ✅ Features
@@ -87,9 +75,6 @@ Run cells one by one for a step-by-step walkthrough.
 | Thermal heatmap overlay | ✅ |
 | Live object count on video | ✅ |
 | Gradio web app UI | ✅ |
-| Jupyter Notebook deployment | ✅ |
-| Sample screenshots extraction | ✅ |
-| Technical report (PDF) | ✅ |
 
 ---
 
@@ -116,9 +101,3 @@ Run cells one by one for a step-by-step walkthrough.
 | **YOLOv8m** | Best speed/accuracy balance. Pre-trained on COCO — detects people out of the box without fine-tuning |
 | **ByteTrack** | Tracks low-confidence detections (unlike DeepSORT) — essential for occluded/blurred players |
 | **supervision** | Clean annotation API for boxes, labels, traces, and heatmaps |
-
----
-
-## 📄 Technical Report
-
-See [`report.pdf`](./report.pdf) for the full 1–2 page write-up.
