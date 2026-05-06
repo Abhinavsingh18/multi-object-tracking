@@ -1,6 +1,6 @@
 # 🏃 Multi-Object Detection & Tracking — Sports / Event Footage
 
-> **Original Public Video Used:** [YouTube Soccer Highlights](https://www.youtube.com/watch?v=KtZyv-KGFa8)
+> **Original Public Video Used:** [10 Minutes of Dusan Bulut Highlights | FIBA 3x3 Basketball](https://www.youtube.com/watch?v=fpnkLpCBBnU)
 
 A complete computer vision pipeline that detects and persistently tracks every person in a sports video using **YOLOv8** (detection) and **ByteTrack** (tracking). Includes a full **Gradio web app** so anyone can upload their own video and get annotated results instantly.
 
@@ -49,7 +49,7 @@ Place any sports/event video in the project folder and name it `input_video.mp4`
 **Or download the test video automatically using yt-dlp:**
 
 ```bash
-yt-dlp "https://www.youtube.com/watch?v=KtZyv-KGFa8" -f "b[ext=mp4]" -o "input_video.mp4"
+yt-dlp "https://www.youtube.com/watch?v=fpnkLpCBBnU" -f "b[ext=mp4]" -o "input_video.mp4"
 ```
 
 ---
