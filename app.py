@@ -84,15 +84,6 @@ DESCRIPTION = """
 - No limits, no fixed numbers.
 """
 
-TIPS = """
-### ⚠️ Tips & Limitations
-- 🎥 Best with **720p/1080p sports footage** (soccer, cricket, basketball).
-- ⏱️ Processing ≈ **2–5× video duration** on CPU.
-- 🔁 **ID swaps** can happen when two subjects overlap for many frames.
-- 📌 Only **people** are tracked.
-- 🌐 Test video: [YouTube Soccer Highlights](https://www.youtube.com/watch?v=KtZyv-KGFa8)
-"""
-
 with gr.Blocks(title="Multi-Object Tracker") as demo:
     gr.Markdown(DESCRIPTION)
     with gr.Row():
@@ -110,7 +101,6 @@ with gr.Blocks(title="Multi-Object Tracker") as demo:
         with gr.Column(scale=1):
             video_output = gr.Video(label="🎬 Annotated Output Video")
             status_box   = gr.Textbox(label="📊 Result Summary", lines=2, interactive=False)
-    gr.Markdown(TIPS)
     run_btn.click(
         fn=run_tracking,
         inputs=[video_input, conf_slider, heatmap_toggle, trace_toggle],
@@ -119,3 +109,4 @@ with gr.Blocks(title="Multi-Object Tracker") as demo:
 
 if __name__ == "__main__":
     demo.launch(share=False, server_name="0.0.0.0", server_port=7860, theme=gr.themes.Soft())
+
