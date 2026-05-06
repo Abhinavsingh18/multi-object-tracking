@@ -2,7 +2,7 @@
 
 > **Original Public Video Used:** [10 Minutes of Dusan Bulut Highlights | FIBA 3x3 Basketball](https://www.youtube.com/watch?v=fpnkLpCBBnU)
 
-A complete computer vision pipeline that detects and persistently tracks every person in a sports video using **YOLOv8** (detection) and **ByteTrack** (tracking). Includes a full **Gradio web app** so anyone can upload their own video and get annotated results instantly.
+A complete computer vision pipeline that detects and persistently tracks every person in a sports video using **YOLOv8** (detection) and **ByteTrack** (tracking). Includes a full **Streamlit web app** so anyone can upload their own video and get annotated results instantly.
 
 ---
 
@@ -10,7 +10,7 @@ A complete computer vision pipeline that detects and persistently tracks every p
 
 ```
 multi-object-tracking/
-├── app.py                  # ← Gradio Web App (run this for the UI)
+├── app.py                  # ← Streamlit Web App (run this for the UI)
 ├── main.py                 # ← CLI Python Script (run this from terminal)
 ├── requirements.txt        # ← All dependencies
 ├── README.md
@@ -52,9 +52,9 @@ yt-dlp "https://www.youtube.com/watch?v=fpnkLpCBBnU" -f "b[ext=mp4]" -o "input_v
 
 #### Option A: 🌐 Web App (Recommended)
 ```bash
-python app.py
+streamlit run app.py
 ```
-Then open your browser at **http://localhost:7860** — upload any video and click **Run Tracking**.
+Then open your browser at **http://localhost:8501** — upload any video and click **Run Tracking**.
 
 #### Option B: 💻 CLI Script
 ```bash
@@ -74,7 +74,7 @@ Reads `input_video.mp4`, writes `output_video.mp4`.
 | Movement trajectory traces | ✅ |
 | Thermal heatmap overlay | ✅ |
 | Live object count on video | ✅ |
-| Gradio web app UI | ✅ |
+| Streamlit web app UI | ✅ |
 
 ---
 
