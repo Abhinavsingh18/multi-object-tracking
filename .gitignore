@@ -16,3 +16,9 @@ __pycache__/
 # (Optional) Ignore large videos if you don't want them in the repo
 # input_video.mp4
 # output_video.mp4
+
+# Ignored project scripts and docs
+generate_pdf.py
+extract_screenshots.py
+report.md
+report.pdf
