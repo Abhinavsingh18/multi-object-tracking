@@ -1,60 +1,124 @@
-# Multi-Object Detection and Tracking in Sports Footage
+# 🏃 Multi-Object Detection & Tracking — Sports / Event Footage
 
-> **Original Public Video Link**: The video used for testing and output generation is a public Soccer Highlights clip available at: [https://www.youtube.com/watch?v=KtZyv-KGFa8](https://www.youtube.com/watch?v=KtZyv-KGFa8)
+> **Original Public Video Used:** [YouTube Soccer Highlights](https://www.youtube.com/watch?v=KtZyv-KGFa8)
 
-This project implements a robust computer vision pipeline for multi-object detection and persistent ID tracking in sports/event footage. It utilizes **YOLOv8** for state-of-the-art object detection and **ByteTrack** for handling multi-object tracking, especially in scenarios with occlusion and rapid movement.
+A complete computer vision pipeline that detects and persistently tracks every person in a sports video using **YOLOv8** (detection) and **ByteTrack** (tracking). Includes a full **Gradio web app** so anyone can upload their own video and get annotated results instantly.
 
-## Features
-- **Object Detection**: Identifies players and individuals (Class 0: `person`) using YOLOv8.
-- **Persistent Tracking**: Assigns unique IDs to detected subjects across frames utilizing ByteTrack.
-- **Annotation & Visualization**: Draws bounding boxes, unique IDs, and recent movement trajectories using the `supervision` library.
+---
 
-## Dependencies
+## 📦 Project Structure
 
-- Python 3.10+
-- `ultralytics` (YOLOv8)
-- `supervision`
-- `opencv-python`
-- `yt-dlp` (for downloading the sample video)
+```
+multi-object-tracking/
+├── app.py                  # ← Gradio Web App (run this for the UI)
+├── main.py                 # ← CLI Python Script (run this from terminal)
+├── demo.ipynb              # ← Jupyter Notebook version
+├── extract_screenshots.py  # ← Extracts sample frames from output video
+├── generate_pdf.py         # ← Converts report.md → report.pdf
+├── requirements.txt        # ← All dependencies
+├── README.md
+├── report.md               # ← Technical report (markdown)
+├── report.pdf              # ← Technical report (PDF)
+└── screenshots/            # ← Sample output frames
+```
 
-## Installation Steps
+---
 
-1. Clone or download this repository.
-2. Create and activate a Python virtual environment:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-3. Install the required dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+## 🚀 Quick Start (3 Steps)
 
-## How to Run the Pipeline
+### Step 1 — Clone & Setup Environment
 
-1. **Provide a Video**: Ensure you have an `input_video.mp4` file in the project directory. If you don't, you can use `yt-dlp` to download a short public sports clip.
-   ```bash
-   yt-dlp "https://www.youtube.com/watch?v=kR2vKqjF2k8" -f "best[ext=mp4]" -o "input_video.mp4"
-   ```
-2. **Run the Script**: Execute the main pipeline script.
-   ```bash
-   python main.py
-   ```
-3. **Check the Output**: The processed video will be saved as `output_video.mp4` in the same directory.
+```bash
+git clone https://github.com/Abhinavsingh18/multi-object-tracking.git
+cd multi-object-tracking
 
-## Assumptions Taken
+python -m venv venv
+source venv/bin/activate        # On Windows: venv\Scripts\activate
 
-1. **Camera Position**: Assumes a relatively stable camera view, though ByteTrack handles panning reasonably well.
-2. **Target Class**: Assumes the main subjects of interest are humans (`class 0`). The script is filtered to only track people, filtering out irrelevant objects like cars or background elements.
-3. **Video Format**: Assumes standard 1080p or 720p 30/60 FPS video input.
+pip install -r requirements.txt
+```
 
-## Limitations
+> ⚠️ YOLOv8 model weights (`yolov8m.pt`) are downloaded **automatically** the first time you run the script. No manual download needed.
 
-1. **Severe Occlusion**: While ByteTrack is robust, prolonged overlapping of subjects (e.g., players hugging or dogpiling) may still cause an ID swap upon separation.
-2. **Extreme Blur**: Fast camera whips causing severe motion blur may drop detections for a few frames. ByteTrack's buffer helps recover IDs, but extremely long blur periods might assign a new ID.
-3. **Computational Load**: Running YOLOv8m (medium) requires a decent CPU/GPU. For real-time performance on lower-end hardware, switching to `yolov8n.pt` (nano) is recommended.
+---
 
-## Model and Tracker Choices
+### Step 2 — Add Your Video
 
-- **Model: YOLOv8m**: Chosen for its excellent balance of inference speed and detection accuracy, crucial for picking up smaller subjects in wide-angle sports shots.
-- **Tracker: ByteTrack**: Chosen over DeepSORT because ByteTrack utilizes low-confidence detections instead of discarding them. This makes it highly effective at maintaining tracks when subjects are partially occluded or blurred.
+Place any sports/event video in the project folder and name it `input_video.mp4`.
+
+**Or download the test video automatically using yt-dlp:**
+
+```bash
+yt-dlp "https://www.youtube.com/watch?v=KtZyv-KGFa8" -f "b[ext=mp4]" -o "input_video.mp4"
+```
+
+---
+
+### Step 3 — Run (choose one)
+
+#### Option A: 🌐 Web App (Recommended)
+```bash
+python app.py
+```
+Then open your browser at **http://localhost:7860** — upload any video and click **Run Tracking**.
+
+#### Option B: 💻 CLI Script
+```bash
+python main.py
+```
+Reads `input_video.mp4`, writes `output_video.mp4`.
+
+#### Option C: 📓 Jupyter Notebook
+```bash
+jupyter notebook demo.ipynb
+```
+Run cells one by one for a step-by-step walkthrough.
+
+---
+
+## ✅ Features
+
+| Feature | Status |
+|---|---|
+| Person detection (YOLOv8m) | ✅ |
+| Persistent ID assignment (ByteTrack) | ✅ |
+| Bounding box + ID labels | ✅ |
+| Movement trajectory traces | ✅ |
+| Thermal heatmap overlay | ✅ |
+| Live object count on video | ✅ |
+| Gradio web app UI | ✅ |
+| Jupyter Notebook deployment | ✅ |
+| Sample screenshots extraction | ✅ |
+| Technical report (PDF) | ✅ |
+
+---
+
+## ⚙️ Assumptions
+
+1. **Target subjects are people** — The pipeline filters for COCO class `0` (person). Balls and other objects are intentionally ignored.
+2. **Camera is relatively stable** — ByteTrack handles moderate panning, but extreme camera shakes may reduce ID stability.
+3. **Standard video format** — Expects standard MP4 at 25–60 FPS.
+
+---
+
+## ⚠️ Known Limitations
+
+1. **Severe overlaps** — When two players are tightly overlapped for many frames, ByteTrack may swap IDs when they separate.
+2. **Extreme motion blur** — Very fast camera panning can cause all detections to be missed for 1–2 frames. ByteTrack's buffer (30 frames) recovers most IDs automatically.
+3. **Processing speed** — CPU-only processing runs at ~3–5× video duration. A CUDA GPU will run in near real-time.
+
+---
+
+## 🔬 Model & Tracker Choices
+
+| Choice | Reason |
+|---|---|
+| **YOLOv8m** | Best speed/accuracy balance. Pre-trained on COCO — detects people out of the box without fine-tuning |
+| **ByteTrack** | Tracks low-confidence detections (unlike DeepSORT) — essential for occluded/blurred players |
+| **supervision** | Clean annotation API for boxes, labels, traces, and heatmaps |
+
+---
+
+## 📄 Technical Report
+
+See [`report.pdf`](./report.pdf) for the full 1–2 page write-up.
