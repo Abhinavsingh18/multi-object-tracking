@@ -44,8 +44,8 @@ def run_tracking(video_path: str, conf_threshold: float, show_heatmap: bool, sho
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
     writer = cv2.VideoWriter(out_path, fourcc, fps, (width, height))
 
-    processed = 0
-    max_ids_seen = 0
+    processed    = 0
+    unique_ids   = set()   # track every ID ever seen across the whole video
 
     while True:
         ret, frame = cap.read()
@@ -57,7 +57,7 @@ def run_tracking(video_path: str, conf_threshold: float, show_heatmap: bool, sho
         detections = tracker.update_with_detections(detections)
 
         if detections.tracker_id is not None and len(detections.tracker_id) > 0:
-            max_ids_seen = max(max_ids_seen, int(detections.tracker_id.max()))
+            unique_ids.update(detections.tracker_id.tolist())
 
         confs  = detections.confidence  if detections.confidence  is not None else []
         tids   = detections.tracker_id  if detections.tracker_id  is not None else []
@@ -77,9 +77,9 @@ def run_tracking(video_path: str, conf_threshold: float, show_heatmap: bool, sho
         # Live counter overlay
         cv2.putText(
             annotated,
-            f"Live Count: {len(detections)}  |  Total IDs: {max_ids_seen}",
+            f"Live Count: {len(detections)}  |  Unique IDs so far: {len(unique_ids)}",
             (20, 45),
-            cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 255), 2, cv2.LINE_AA,
+            cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 255), 2, cv2.LINE_AA,
         )
 
         writer.write(annotated)
@@ -91,7 +91,8 @@ def run_tracking(video_path: str, conf_threshold: float, show_heatmap: bool, sho
     progress_pct = round(processed / total * 100) if total > 0 else 100
     summary = (
         f"✅ Done! Processed {processed}/{total} frames ({progress_pct}%)\n"
-        f"👥 Total unique IDs assigned: {max_ids_seen}"
+        f"👥 Total unique IDs assigned: {len(unique_ids)}\n"
+        f"💡 Tip: If IDs seem too high, increase the confidence threshold slider."
     )
     return out_path, summary
 
@@ -130,9 +131,9 @@ with gr.Blocks(title="Multi-Object Tracker") as demo:
         with gr.Column(scale=1):
             video_input = gr.Video(label="📹 Upload Input Video", sources=["upload"])
             conf_slider = gr.Slider(
-                minimum=0.1, maximum=0.9, value=0.3, step=0.05,
+                minimum=0.1, maximum=0.9, value=0.5, step=0.05,
                 label="Detection Confidence Threshold",
-                info="Lower = catch more people (may add false positives)"
+                info="⬆️ Higher = fewer false detections & more stable IDs. Recommended: 0.4–0.6 for sports."
             )
             with gr.Row():
                 heatmap_toggle = gr.Checkbox(value=True,  label="🔥 Show Heatmap")
