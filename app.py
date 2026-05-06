@@ -28,7 +28,7 @@ def run_tracking(video_path: str, conf_threshold: float, show_heatmap: bool, sho
     out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tracked_output.mp4")
     writer   = cv2.VideoWriter(out_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, (width, height))
 
-    all_ids   = set()
+    all_ids   = set()  # not used for display — ByteTrack IDs are shown directly on video
     processed = 0
 
     while True:
@@ -40,7 +40,7 @@ def run_tracking(video_path: str, conf_threshold: float, show_heatmap: bool, sho
         detections = sv.Detections.from_ultralytics(results)
         detections = tracker.update_with_detections(detections)
 
-        # Track all unique IDs seen
+        # Track unique IDs (for internal use only — not shown in summary)
         if detections.tracker_id is not None:
             all_ids.update(detections.tracker_id.tolist())
 
@@ -64,10 +64,7 @@ def run_tracking(video_path: str, conf_threshold: float, show_heatmap: bool, sho
     writer.release()
 
     progress_pct = round(processed / total * 100) if total > 0 else 100
-    summary = (
-        f"Done — {processed}/{total} frames ({progress_pct}%)\n"
-        f"Unique subjects detected: {len(all_ids)}"
-    )
+    summary = f"Done — {processed}/{total} frames processed ({progress_pct}%)"
     return out_path, summary
 
 
